@@ -34,7 +34,8 @@ import {
   Cloud,
   Lightbulb,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import ScrollToTop from "@/components/ScrollToTop";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -198,6 +199,31 @@ export default function AppDevelopmentPage() {
   const navigate = useRouter();
   const [openFAQ, setOpenFAQ] = useState<number | null>(null);
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = useState(false);
+
+  // Mouse tracking for interactive animations
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePosition({ x: e.clientX, y: e.clientY });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  // Spring animations for mouse following
+  const mouseX = useSpring(useMotionValue(0), { stiffness: 150, damping: 15 });
+  const mouseY = useSpring(useMotionValue(0), { stiffness: 150, damping: 15 });
+
+  useEffect(() => {
+    mouseX.set(mousePosition.x);
+    mouseY.set(mousePosition.y);
+  }, [mousePosition, mouseX, mouseY]);
+
+  // Transform mouse position to card movement
+  const rotateX = useTransform(mouseY, [0, window.innerHeight], [5, -5]);
+  const rotateY = useTransform(mouseX, [0, window.innerWidth], [-5, 5]);
 
   const filteredFAQ =
     selectedCategory === "All"
@@ -220,161 +246,387 @@ export default function AppDevelopmentPage() {
 
   return (
     <>
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-background via-background to-muted/20 py-8 lg:py-16">
-        <div className="absolute inset-0">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-primary/10 rounded-full blur-3xl"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-r from-primary/5 to-transparent rounded-full blur-3xl"></div>
-        </div>
+      {/* Compact Hero Section with Background Image */}
+      <section className="py-12 relative">
+        {/* Background Image with Overlay */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: `url('https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')`,
+          }}
+        />
+        <div className="absolute inset-0 bg-black/85"></div>
+        
+        {/* Floating Background Elements */}
+        <motion.div
+          className="absolute top-10 left-8 w-20 h-20 bg-primary/20 rounded-full blur-xl"
+          animate={{
+            y: [0, -20, 0],
+            x: [0, 15, 0],
+            scale: [1, 1.1, 1],
+          }}
+          transition={{
+            duration: 6,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+        <motion.div
+          className="absolute top-20 right-12 w-16 h-16 bg-accent/30 rounded-full blur-lg"
+          animate={{
+            y: [0, 15, 0],
+            x: [0, -15, 0],
+            scale: [1, 0.9, 1],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 1
+          }}
+        />
+        <motion.div
+          className="absolute bottom-16 left-1/4 w-12 h-12 bg-secondary/25 rounded-full blur-md"
+          animate={{
+            y: [0, -15, 0],
+            x: [0, 10, 0],
+            scale: [1, 1.05, 1],
+          }}
+          transition={{
+            duration: 10,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 2
+          }}
+        />
 
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center max-w-4xl mx-auto">
-            <div className="flex justify-center mb-8">
-              <span className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 text-sm text-primary font-semibold text-base shadow-md border border-primary/30">
-                <Smartphone className="w-5 h-5 text-primary mr-1" />
+          <div className="liquid-glass-card">
+            <div className="relative z-10 flex flex-col items-start justify-center text-center text-white px-4 py-[32px] md:p-[32px]">
+              <motion.div 
+                className="text-center max-w-4xl mx-auto"
+                style={{
+                  rotateX: rotateX,
+                  rotateY: rotateY,
+                  transformStyle: "preserve-3d",
+                }}
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+              >
+                {/* Compact Glass Effect Badge */}
+                <motion.div 
+                  className="w-full md:w-auto inline-flex items-center gap-2 px-4 py-2 rounded-full backdrop-blur-md bg-white/10 border border-white/20 text-[0.7rem] text-white font-semibold text-sm shadow-lg mb-6"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.5, delay: 0.1 }}
+                  whileHover={{ scale: 1.05 }}
+                >
+                  <motion.div
+                    animate={{ rotate: [0, 360] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                    className=""
+                  >
+                    <Smartphone className="w-4 h-4 text-white" />
+                  </motion.div>
                 App Development
-                <span className="flex items-center gap-1 ml-2 text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full font-medium">
-                  Mobile Solutions <Rocket className="w-4 h-4" />
-                </span>
-              </span>
-            </div>
-            <h1
-              className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-6 md:mb-8 leading-tight"
+                  <motion.span 
+                    className="flex items-center gap-1 ml-2 text-xs bg-white/20 text-white px-2 py-1 rounded-full"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.5, delay: 0.3 }}
+                  >
+                    Mobile Solutions 
+                    <motion.div
+                      animate={{ x: [0, 3, 0] }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                    >
+                      <Rocket className="w-3 h-3" />
+                    </motion.div>
+                  </motion.span>
+                </motion.div>
+
+                {/* Compact Main Heading */}
+                <motion.h1
+                  className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight text-white"
               style={{ fontFamily: "Gothic" }}
-            >
-              <span className="bg-gradient-to-r from-foreground via-foreground to-primary bg-clip-text text-transparent">
-                App
-              </span>
-              <span className="block text-primary">Development</span>
-            </h1>
-            <p className="text-sm sm:text-md md:text-lg text-muted-foreground mb-8 md:mb-12 leading-relaxed max-w-3xl mx-auto px-4">
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.2 }}
+                >
+                  <motion.span
+                    initial={{ opacity: 0, x: -15 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.5, delay: 0.4 }}
+                    whileHover={{ 
+                      scale: 1.03,
+                      transition: { duration: 0.2 }
+                    }}
+                  >
+                    App
+                  </motion.span>
+                  <motion.span 
+                    className="block text-[#D1A980]"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.5, delay: 0.6 }}
+                    whileHover={{ 
+                      scale: 1.03,
+                      color: "#D1A980",
+                      transition: { duration: 0.2 }
+                    }}
+                  >
+                    Development
+                  </motion.span>
+                </motion.h1>
+
+                {/* Compact Description */}
+                <motion.p 
+                  className="text-base md:text-lg text-white/90 mb-8 leading-relaxed max-w-2xl mx-auto"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.6, delay: 0.8 }}
+                >
               We create innovative mobile applications that engage users and drive business growth.
               From native apps to cross-platform solutions, we bring your app ideas to life.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
+                </motion.p>
+
+                {/* Compact Buttons */}
+                <motion.div 
+                  className="flex flex-col sm:flex-row gap-3 justify-center"
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 1.0 }}
+                >
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
               <Button
                 size="lg"
-                className="text-sm sm:text-md px-6 sm:px-8 py-3 sm:py-4 group hover:scale-105 transition-transform duration-300 cursor-pointer"
-                onClick={() => {
-                  navigate.push("/contact");
-                }}
-              >
-                <Headset className="h-5 w-5 sm:h-6 sm:w-6 mr-2" />
+                      className="text-base px-6 py-3 group backdrop-blur-md bg-white/10 hover:bg-white/20 text-white border border-white/30 hover:border-white/50 transition-all duration-300 cursor-pointer"
+                      onClick={() => navigate.push("/contact")}
+                    >
+                      <motion.div
+                        animate={{ rotate: [0, 8, -8, 0] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      >
+                        <Headset className="h-5 w-5 mr-2" />
+                      </motion.div>
                 Start Your Project
-                <ArrowRight className="ml-2 h-5 w-5 sm:h-6 sm:w-6 group-hover:translate-x-1 transition-transform" />
+                      <motion.div
+                        animate={{ x: [0, 3, 0] }}
+                        transition={{ duration: 1.5, repeat: Infinity }}
+                      >
+                        <ArrowRight className="ml-2 h-5 w-5" />
+                      </motion.div>
               </Button>
+                  </motion.div>
+                  
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="hidden md:block"
+                  >
               <Button
                 variant="outline"
                 size="lg"
-                className="text-sm sm:text-md px-6 sm:px-8 py-3 sm:py-4 hover:scale-105 transition-transform duration-300 cursor-pointer"
-                onClick={() => {
-                  navigate.push("/portfolio");
-                }}
+                      className="text-base px-6 py-3 backdrop-blur-md bg-white/5 hover:bg-white/10 text-white border border-white/30 hover:border-white/50 transition-all duration-300 cursor-pointer"
               >
-                <ExternalLink className="h-5 w-5 sm:h-6 sm:w-6 mr-2" />
+                      
+                        <ExternalLink className="h-5 w-5 mr-2" />
+                      
                 View Portfolio
               </Button>
+                  </motion.div>
+                </motion.div>
+              </motion.div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Services Section */}
-      <section className="py-8 md:py-20">
+      {/* Compact Services Section with Glass Effects */}
+      <section className="py-12 md:py-16 bg-gradient-to-br from-background via-background to-muted/10">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12 md:mb-16">
-            <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-primary/10 border border-primary/20 rounded-full mb-4 sm:mb-6">
-              <Zap className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
-              <span className="text-xs sm:text-sm font-medium text-primary">
+          <motion.div 
+            className="text-center mb-12"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+          >
+            <motion.div 
+              className="inline-flex items-center gap-2 px-4 py-2 backdrop-blur-md bg-primary/10 border border-primary/20 rounded-full mb-6"
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              viewport={{ once: true }}
+            >
+              <motion.div
+                animate={{ rotate: [0, 360] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+              >
+                <Zap className="h-4 w-4 text-primary" />
+              </motion.div>
+              <span className="text-sm font-medium text-primary">
                 Our Services
               </span>
-            </div>
-            <h2
-              className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6"
+            </motion.div>
+            <motion.h2
+              className="text-3xl md:text-4xl font-bold mb-4"
               style={{ fontFamily: "Gothic" }}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              viewport={{ once: true }}
             >
               What We Build
-            </h2>
-            <p className="text-sm sm:text-md md:text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed px-4">
-              Comprehensive mobile app development services tailored to your business
-              needs and target audience.
-            </p>
-          </div>
+            </motion.h2>
+            <motion.p 
+              className="text-base text-muted-foreground max-w-2xl mx-auto leading-relaxed"
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              viewport={{ once: true }}
+            >
+              Comprehensive mobile app development services tailored to your business needs and goals.
+            </motion.p>
+          </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 md:gap-8">
+          <div className="grid md:grid-cols-4 gap-6">
             {services.map((service, index) => (
-              <Card
+              <motion.div
                 key={service.title}
-                className="group relative overflow-hidden hover:shadow-2xl transition-all duration-500 border-0 bg-gradient-to-br from-background to-muted/50 backdrop-blur-sm"
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                viewport={{ once: true }}
+                whileHover={{ scale: 1.02 }}
+                className="group relative p-5 rounded-3xl bg-gradient-to-br from-background via-background to-muted/30 border border-muted/50 hover:border-primary/30 transition-all duration-500 hover:scale-102 shadow-lg cursor-pointer h-full"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <CardContent className="p-6 md:p-8 relative z-10">
-                  <div className="space-y-4 md:space-y-6">
-                    <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-primary/20 to-primary/10 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                      <service.icon className="h-5 w-5 md:h-6 md:w-6 text-primary" />
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl"></div>
+                <div className="relative z-10 h-full flex flex-col">
+                  <div className="flex items-center gap-3 w-full">
+                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                      <service.icon className="h-5 w-5 text-primary" />
                     </div>
-                    <div>
-                      <h3 className="text-xl lg:text-2xl font-bold mb-2 md:mb-3">
+                    <h4
+                      className="text-2xl font-bold text-foreground w-[80%]"
+                      style={{ fontFamily: "Gothic" }}
+                    >
                         {service.title}
-                      </h3>
-                      <p className="text-sm md:text-base text-muted-foreground leading-relaxed mb-3 md:mb-4">
+                    </h4>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-4 leading-relaxed mt-4">
                         {service.description}
                       </p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="space-y-2 mt-auto">
                         {service.features.map((feature) => (
-                          <div
-                            key={feature}
-                            className="flex items-center gap-2 text-xs sm:text-sm"
-                          >
-                            <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
-                            <span className="text-muted-foreground">
+                      <div key={feature} className="flex items-center gap-3">
+                        <CheckCircle className="h-4 w-4 text-primary" />
+                        <span className="text-foreground font-medium text-sm">
                               {feature}
                             </span>
                           </div>
                         ))}
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Technologies Section */}
-      <section className="py-8 md:py-20 bg-muted/20">
+      {/* Compact Technologies Section with Glass Effects */}
+      <section className="py-12 md:py-16 bg-gradient-to-br from-muted/20 via-background to-muted/10">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12 md:mb-16">
-            <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-primary/10 border border-primary/20 rounded-full mb-4 sm:mb-6">
-              <Settings className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
-              <span className="text-xs sm:text-sm font-medium text-primary">
+          <motion.div 
+            className="text-center mb-12"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+          >
+            <motion.div 
+              className="inline-flex items-center gap-2 px-4 py-2 backdrop-blur-md bg-primary/10 border border-primary/20 rounded-full mb-6"
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              viewport={{ once: true }}
+            >
+              <motion.div
+                animate={{ rotate: [0, 360] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+              >
+                <Settings className="h-4 w-4 text-primary" />
+              </motion.div>
+              <span className="text-sm font-medium text-primary">
                 Technologies
               </span>
-            </div>
-            <h2
-              className="text-3xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6"
+            </motion.div>
+            <motion.h2
+              className="text-3xl md:text-4xl font-bold mb-4"
               style={{ fontFamily: "Gothic" }}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              viewport={{ once: true }}
             >
               Mobile Tech Stack
-            </h2>
-            <p className="text-sm sm:text-md text-muted-foreground max-w-4xl mx-auto leading-relaxed mb-6 sm:mb-8 px-2">
-              We leverage cutting-edge mobile technologies and frameworks to build
-              fast, scalable, and user-friendly applications. Our carefully curated
-              tech stack ensures optimal performance across all devices and platforms.
-            </p>
-            <p className="text-xs sm:text-sm text-muted-foreground max-w-3xl mx-auto leading-relaxed px-2">
-              From native development to cross-platform solutions, we stay updated
-              with the latest industry standards to deliver exceptional mobile
-              experiences that drive user engagement.
-            </p>
-          </div>
+            </motion.h2>
+            <motion.p 
+              className="text-base text-muted-foreground max-w-3xl mx-auto leading-relaxed"
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              viewport={{ once: true }}
+            >
+              We leverage cutting-edge mobile technologies and frameworks to build fast, scalable, and user-friendly applications.
+            </motion.p>
+          </motion.div>
 
-          {/* Tech Stack Tabs */}
-          <div className="max-w-7xl mx-auto">
-          
-            <div className="relative mb-8 sm:mb-12 bg-primary/10 rounded-full p-1 sm:p-2">
+          {/* Responsive Tech Stack Tabs */}
+          <div className="max-w-6xl mx-auto">
+            {/* Mobile/Tablet: Horizontal Scrollable Tabs */}
+            <motion.div 
+              className="block lg:hidden mb-6"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.5 }}
+              viewport={{ once: true }}
+            >
+              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                {["All", "Native", "Cross-Platform", "Backend"].map((category) => (
+                  <motion.button
+                    key={category}
+                    onClick={() => setSelectedCategory(category)}
+                    className={`
+                      flex-shrink-0 px-4 py-2 rounded-full font-semibold transition-all duration-300 whitespace-nowrap
+                      ${selectedCategory === category 
+                        ? "bg-primary text-white shadow-lg" 
+                        : "bg-white/10 text-muted-foreground hover:bg-white/20 hover:text-primary"
+                      }
+                    `}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <span className="text-sm">{category}</span>
+                  </motion.button>
+                ))}
+          </div>
+            </motion.div>
+
+            {/* Desktop: Full Width Tabs */}
+            <motion.div 
+              className="hidden lg:block relative mb-8 backdrop-blur-md bg-white/5 border border-white/10 rounded-full p-1"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.5 }}
+              viewport={{ once: true }}
+            >
               {(() => {
                 const categories = [
                   "All",
@@ -389,96 +641,155 @@ export default function AppDevelopmentPage() {
                 return (
                   <div className="flex w-full">
                     {/* Sliding Indicator */}
-                    <div
-                      className="absolute left-0 top-0 h-full transition-all duration-300 ease-in-out z-0"
+                    <motion.div
+                      className="absolute left-0 top-0 h-full z-0 backdrop-blur-md bg-primary/20 border border-primary/30 rounded-full"
                       style={{
                         width: `calc(100% / ${tabCount})`,
-                        transform: `translateX(${activeIndex * 100}%)`,
-                        borderRadius: "9999px",
-                        background:
-                          "linear-gradient(90deg, var(--tw-gradient-stops))",
-                        backgroundColor: "var(--tw-prose-invert) !important",
-                        backgroundImage:
-                          "linear-gradient(to right, var(--tw-gradient-stops), rgba(80,72,229,0.12), rgba(80,72,229,0.08))",
-                        boxShadow:
-                          "0 4px 16px 0 rgba(80, 72, 229, 0.10)",
                       }}
-                    ></div>
+                      animate={{
+                        x: `${activeIndex * 100}%`,
+                      }}
+                      transition={{ duration: 0.3, ease: "easeInOut" }}
+                    />
                     {categories.map((category, idx) => {
                       const isActive = selectedCategory === category;
                       return (
-                        <button
+                        <motion.button
                           key={category}
                           onClick={() => setSelectedCategory(category)}
                           className={`
-                            relative z-10 flex-1 flex items-center justify-center gap-1 sm:gap-2 px-0 py-1 sm:py-2 rounded-full font-semibold transition-all duration-300
-                            border border-transparent
-                            ${
-                              isActive
-                                ? "text-primary bg-accent/30"
-                                : "text-primary/70 hover:text-primary"
-                            }
-                            focus:outline-primary focus:ring-2 focus:ring-primary/40
+                            relative z-10 flex-1 flex items-center justify-center px-2 py-2 rounded-full font-semibold transition-all duration-300
+                            ${isActive ? "text-primary" : "text-muted-foreground hover:text-primary"}
                           `}
-                          style={{
-                            minWidth: 0,
-                            width: "100%",
-                            background: "primary",
-                          }}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
                         >
-                          <span
-                            className={`text-xs sm:text-sm md:text-base transition-colors duration-300 ${
-                              isActive ? "text-primary font-bold" : ""
-                            }`}
-                          >
+                          <span className="text-sm transition-colors duration-300">
                             {category}
                           </span>
-                        </button>
+                        </motion.button>
                       );
                     })}
                   </div>
                 );
               })()}
-            </div>
+            </motion.div>
 
-            {/* Technologies Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 md:gap-6">
+            {/* Mobile/Tablet: Tech Stack Slider */}
+            <motion.div 
+              className="block lg:hidden"
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.6 }}
+              viewport={{ once: true }}
+            >
+              <div className="relative">
+                {/* Slider Container */}
+                <div className="overflow-x-auto">
+                  <div className="flex gap-4 pb-4" style={{ width: 'max-content' }}>
               {technologies
                 .filter(
                   (tech) =>
                     selectedCategory === "All" ||
                     tech.category === selectedCategory
                 )
-                .map((tech) => (
-                  <Card
+                      .map((tech, index) => (
+                        <motion.div
                     key={tech.name}
-                    className="group relative overflow-hidden hover:shadow-xl transition-all duration-500 border-0 bg-gradient-to-br from-background to-muted/50 backdrop-blur-sm text-center"
-                  >
+                          initial={{ opacity: 0, x: 20 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.4, delay: index * 0.05 }}
+                          viewport={{ once: true }}
+                          whileHover={{ y: -5, scale: 1.05 }}
+                          className="flex-shrink-0 w-32"
+                        >
+                          <Card className="group relative overflow-hidden hover:shadow-xl transition-all duration-500 border-0 backdrop-blur-md bg-white/5 hover:bg-white/10 border-white/10 hover:border-white/20 text-center h-full">
                     <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <CardContent className="p-3 sm:p-4 md:p-6 relative z-10">
-                      <div className="space-y-3 sm:space-y-4">
-                        <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 mx-auto rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                            <CardContent className="p-4 relative z-10 h-full flex flex-col justify-center">
+                              <div className="space-y-3">
+                                <motion.div 
+                                  className="w-12 h-12 mx-auto rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
+                                  whileHover={{ rotate: 5 }}
+                                >
                           <Image
                             src={tech.icon}
                             alt={tech.name}
-                            width={48}
-                            height={48}
-                            className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16"
-                          />
-                        </div>
+                                    width={32}
+                                    height={32}
+                                    className="w-8 h-8"
+                                  />
+                                </motion.div>
                         <div>
-                          <h4 className="font-bold text-xs sm:text-sm md:text-base mb-1 sm:mb-2">
+                                  <h4 className="font-bold text-sm mb-2">
                             {tech.name}
                           </h4>
-                          <Badge variant="outline" className="text-xs">
+                                  <Badge variant="outline" className="text-xs px-2 py-1">
                             {tech.category}
                           </Badge>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
+                        </motion.div>
                 ))}
             </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Desktop: Tech Stack Grid */}
+            <motion.div 
+              className="hidden lg:grid grid-cols-5 xl:grid-cols-6 gap-4"
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.6 }}
+              viewport={{ once: true }}
+            >
+              {technologies
+                .filter(
+                  (tech) =>
+                    selectedCategory === "All" ||
+                    tech.category === selectedCategory
+                )
+                .map((tech, index) => (
+                  <motion.div
+                    key={tech.name}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: index * 0.05 }}
+                    viewport={{ once: true }}
+                    whileHover={{ y: -5, scale: 1.05 }}
+                  >
+                    <Card className="group relative overflow-hidden hover:shadow-xl transition-all duration-500 border-0 backdrop-blur-md bg-white/5 hover:bg-white/10 border-white/10 hover:border-white/20 text-center">
+                      <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                      <CardContent className="p-4 relative z-10">
+                        <div className="space-y-3">
+                          <motion.div 
+                            className="w-12 h-12 mx-auto rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
+                            whileHover={{ rotate: 5 }}
+                          >
+                            <Image
+                              src={tech.icon}
+                              alt={tech.name}
+                              width={32}
+                              height={32}
+                              className="w-8 h-8"
+                            />
+                          </motion.div>
+                          <div>
+                            <h4 className="font-bold text-sm mb-1">
+                              {tech.name}
+                            </h4>
+                            <Badge variant="outline" className="text-xs px-2 py-1">
+                              {tech.category}
+                            </Badge>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
+            </motion.div>
 
             {/* Technology Description */}
             <div className="mt-12 sm:mt-16 text-center">
